@@ -23,7 +23,7 @@ removes the blip when the player gets in (or after 2 minutes), sets the driver b
 **Phone build verified (2026-09-28 19:08, user: "work as expected")**: contact "Taxi" → call screen, hang up
 after 2 s → spawned 58 m away → within 12 m after 5 s → held (AI mode 0) → the player hired it → map →
 `WarpToDestination: warped` → ~30 m of driving (mode 2, role 4, then 5, then 0 at arrival) → out → released,
-contact back. Nothing committed yet; no GitHub repo (ask the user).
+contact back. First commit 2026-10-02 (local repo; no GitHub repo yet, ask the user before creating one).
 
 Round 4 (2026-09-28 19:00): the taxi started at once (speed 4 after 0.25 s; the ~5 s wait didn't recur), but
 `_path_to_xform(player xform, true)` ended after 2 s 25 m from the player (the nearest road node to a player off
