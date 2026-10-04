@@ -2,7 +2,8 @@
 
 The user's idea (2026-09-28): an "E-Car Hailing" phone entry. Like the Car Valet bringing a car, but the car is a
 taxi, the driver is a taxi driver and he stays in; Wei then gets in as a passenger and the game's own taxi ride
-(map, fare, skip) takes over. Local repo only so far (no GitHub repo yet; ask the user before creating one).
+(map, fare, skip) takes over. Public on GitHub since 2026-10-04: https://github.com/aUsernameWoW/sleeping-dogs-e-hailing
+(no Nexus page yet; the CI's Nexus jobs skip without the `NEXUS_*` settings).
 
 Status (2026-09-28): the bridge works in game (compile errors with position, durational blocks finish, popups,
 our `Debug.println` and the game's scripts' prints in the log). Test round 2 spawned the taxi (`625MHCTaxi01`,
@@ -23,7 +24,7 @@ removes the blip when the player gets in (or after 2 minutes), sets the driver b
 **Phone build verified (2026-09-28 19:08, user: "work as expected")**: contact "Taxi" → call screen, hang up
 after 2 s → spawned 58 m away → within 12 m after 5 s → held (AI mode 0) → the player hired it → map →
 `WarpToDestination: warped` → ~30 m of driving (mode 2, role 4, then 5, then 0 at arrival) → out → released,
-contact back. First commit 2026-10-02 (local repo; no GitHub repo yet, ask the user before creating one).
+contact back. First commit 2026-10-02; published 2026-10-04 with README/ADVANCED and the SDEncore fix below.
 
 Round 4 (2026-09-28 19:00): the taxi started at once (speed 4 after 0.25 s; the ~5 s wait didn't recur), but
 `_path_to_xform(player xform, true)` ended after 2 s 25 m from the player (the nearest road node to a player off
@@ -48,8 +49,9 @@ parameter: write `Debug.println("a", b)` (braces nest a list, which the log now 
    the console (`core/console.cc`).
 2. **Dispatch** (done through the console, round 3): a Skookum coroutine modeled on the Car Valet's.
 3. **Phone contact** (`core/phone.cc` + `core/taxi.cc`, verified in game 2026-09-28).
-4. Later: a root menu item next to Contacts/Messages (`Smartphone_AddMenuItem` + `UIHK_PDAWidget::handleMessage`),
-   a taxi portrait, README/ADVANCED, GitHub repo (ask the user), CI.
+4. README/ADVANCED, public GitHub repo, CI (done 2026-10-04).
+5. Later: a root menu item next to Contacts/Messages (`Smartphone_AddMenuItem` + `UIHK_PDAWidget::handleMessage`),
+   a taxi portrait.
 
 ## How the game does it (installed-build facts from the PDB/IDA)
 
