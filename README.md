@@ -14,8 +14,7 @@
 
 ## 中文
 
-把《热血无赖：终极版》的手机变成叫车软件：通讯录里多一个 **Taxi** 联系人，打过去，附近就会派来一辆的士，开到你
-身边停下等你。上车以后就是游戏原本的坐的士：付车费、在地图上选目的地，可以直接跳过路程。
+把《热血无赖：终极版》的手机变成叫车软件：通讯录里多一个 **Taxi** 联系人，打过去，附近就会派来一辆的士，开到你身边停下等你。上车以后就是游戏原本的坐的士：付车费、在地图上选目的地，可以直接跳过路程。
 
 状态：**早期版本**。在作者的电脑上测试正常。
 
@@ -47,8 +46,7 @@ plugins\
 
 1. 双击打开下载的 `SDTaxi.zip`。
 2. 选中里面的 `dinput8.dll` 和 `plugins` 文件夹，一起拖进游戏文件夹。
-3. 如果 Windows 弹出「替换或跳过文件」，说明游戏文件夹里已经有 `dinput8.dll` 了（你以前装过别的 mod，
-   加载器已经在了），选「跳过该文件」。已有的 `plugins` 文件夹会自动合并，不用管。
+3. 如果 Windows 弹出「替换或跳过文件」，说明游戏文件夹里已经有 `dinput8.dll` 了（你以前装过别的 mod，加载器已经在了），选「跳过该文件」。已有的 `plugins` 文件夹会自动合并，不用管。
 
 放好后，游戏文件夹里应该是这样（只列出相关的部分）：
 
@@ -88,19 +86,15 @@ SleepingDogsDefinitiveEdition\
 
 **`plugins` 里没有 `SDTaxi.log`**
 
-说明 mod 没被加载：检查 `dinput8.dll` 是否和 `sdhdship.exe` 在同一层，杀毒软件有没有删掉它（ASI 加载器偶尔
-会被误报，可以从隔离区还原并把游戏文件夹加入排除项）。如果第 3 步跳过了原有的 `dinput8.dll`，那个文件可能
-不是 ASI 加载器，备份后换成压缩包里的。
+说明 mod 没被加载：检查 `dinput8.dll` 是否和 `sdhdship.exe` 在同一层，杀毒软件有没有删掉它（ASI 加载器偶尔会被误报，可以从隔离区还原并把游戏文件夹加入排除项）。如果第 3 步跳过了原有的 `dinput8.dll`，那个文件可能不是 ASI 加载器，备份后换成压缩包里的。
 
 **更新**
 
-下载新的 `SDTaxi.zip`，只把里面的 `plugins` 文件夹拖进游戏文件夹，Windows 询问时选「替换目标中的文件」。
-`SDTaxi.ini` 不在压缩包里，你的设置会保留。
+下载新的 `SDTaxi.zip`，只把里面的 `plugins` 文件夹拖进游戏文件夹，Windows 询问时选「替换目标中的文件」。`SDTaxi.ini` 不在压缩包里，你的设置会保留。
 
 **卸载**
 
-删掉 `plugins` 里的 `SDTaxi.asi`、`SDTaxi.ini` 和 `SDTaxi.log`。如果 `plugins` 里已经没有其他 `.asi` 文件了，
-`dinput8.dll` 也可以删掉。
+删掉 `plugins` 里的 `SDTaxi.asi`、`SDTaxi.ini` 和 `SDTaxi.log`。如果 `plugins` 里已经没有其他 `.asi` 文件了，`dinput8.dll` 也可以删掉。
 
 **遇到问题怎么反馈**
 
@@ -118,8 +112,7 @@ SleepingDogsDefinitiveEdition\
   - SDmodding 分享的游戏 v1.0 版 exe 和调试符号（PDB，Steam 首发版自带）：游戏的脚本系统、手机通讯录和坐的士的流程都是从这里查到的；
   - [SDK](https://github.com/SDmodding/SDK)：游戏里的类名和数据结构；
   - [Files](https://github.com/SDmodding/Files) 里导出的属性集（的士司机就是在这里找到的）、动作树和符号表（QSymbolsDictionary）；
-  - [BigFileSystem](https://github.com/SDmodding/BigFileSystem)、[TheoryEngine](https://github.com/SDmodding/TheoryEngine)，以及 sneakyevil 的 [SD-BigFileExplorer](https://github.com/sneakyevil/SD-BigFileExplorer) 和 [Ekey](https://github.com/Ekey) 的 SDDEUnpacker 里的文件名列表：
-    读取游戏资源包（`.big`）的工具是照着它们写的，游戏的脚本和动作树都是用它从资源包里取出的。
+  - [BigFileSystem](https://github.com/SDmodding/BigFileSystem)、[TheoryEngine](https://github.com/SDmodding/TheoryEngine)，以及 sneakyevil 的 [SD-BigFileExplorer](https://github.com/sneakyevil/SD-BigFileExplorer) 和 [Ekey](https://github.com/Ekey) 的 SDDEUnpacker 里的文件名列表：读取游戏资源包（`.big`）的工具是照着它们写的，游戏的脚本和动作树都是用它从资源包里取出的。
 
 **游戏原有的内容**
 
@@ -129,8 +122,7 @@ SleepingDogsDefinitiveEdition\
 
 **mod 里包含的代码**（许可证全文见 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)）
 
-- [Ultimate ASI Loader](https://github.com/ThirteenAG/Ultimate-ASI-Loader)（ThirteenAG）：压缩包里的 `dinput8.dll`，让游戏加载 mod。它本身还包含 MinHook、
-  [miniz](https://github.com/richgel999/miniz)（Rich Geldreich 等）和 [praydog](https://github.com/praydog) 的 FunctionHookMinHook。
+- [Ultimate ASI Loader](https://github.com/ThirteenAG/Ultimate-ASI-Loader)（ThirteenAG）：压缩包里的 `dinput8.dll`，让游戏加载 mod。它本身还包含 MinHook、[miniz](https://github.com/richgel999/miniz)（Rich Geldreich 等）和 [praydog](https://github.com/praydog) 的 FunctionHookMinHook。
 - [MinHook](https://github.com/TsudaKageyu/minhook)（Tsuda Kageyu，内含 Vyacheslav Patkov 的 Hacker Disassembler Engine）：mod 靠它接入游戏。
 
 **工具**
@@ -140,8 +132,7 @@ SleepingDogsDefinitiveEdition\
 
 **游戏与商标**
 
-《热血无赖：终极版》（Sleeping Dogs: Definitive Edition）由 United Front Games 开发、Square Enix 发行，
-游戏及其内容的版权归 Square Enix 所有。
+《热血无赖：终极版》（Sleeping Dogs: Definitive Edition）由 United Front Games 开发、Square Enix 发行，游戏及其内容的版权归 Square Enix 所有。
 
 与 Square Enix、United Front Games 均无关联。
 
