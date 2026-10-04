@@ -183,6 +183,16 @@ parameter: write `Debug.println("a", b)` (braces nest a list, which the log now 
   kills traffic and parked cars within 25 m of the warp point, moves the car there) → `PlaceTransitVehicle` next
   vehicle-manager update; if the warp fails, mode 1 + attach to the road network: it drives there for real.
 - `core/mem.hh`: `Readable` / `Read` for game memory whose layout comes from the disassembly.
+- **Next to SDEncore** (2026-10-04): it is built on this core and hooks five of the same functions
+  (`update_delta`, both `ADebug::print`s, `PopulateList`, `LaunchSubOption`), and it loads first (the loader takes
+  `plugins\*.asi` in name order), so MinHook's `jmp rel32` already covers their first 5 bytes when we scan: all our
+  patterns failed, no taxi at all. `scan::FindUnique` now retries a pattern with no match (12+ bytes) with its first
+  5 bytes as `E9 ? ? ? ?` and logs `(it starts with a jump: hooked by another mod)`; hooking it again chains (MinHook
+  copies the jump into our trampoline). `tests/scan_test.cc` writes a pattern and then a jump over a function in its
+  own `.text` (bytes in a section of their own land in a second `.text`, which the scan skips). The Debug print slots
+  chain the way SDEncore's do: a slot that isn't the shipped `ret 0` is called after ours for everything but our
+  tags, and the patch always happens (the `[SDTaxi:watch]` tag needs it; `ScriptPrints` only decides what is
+  logged). Built and unit-tested; not yet run in game with both installed.
 
 ## Testing
 

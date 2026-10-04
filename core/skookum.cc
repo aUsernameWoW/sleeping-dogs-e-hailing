@@ -194,7 +194,7 @@ namespace skookum
 		const uint32_t count = Read<uint32_t>(scope, 0x58);
 		const void* data = Read<const void*>(scope, 0x60);
 		const void* arg = count ? Read<const void*>(Read<const void*>(data, 0x0), 0x8) : nullptr;
-		if (newline && HandleTag(arg)) {
+		if (!gScriptPrints) {
 			return;
 		}
 		gPrintLine += prefix;
@@ -220,18 +220,43 @@ namespace skookum
 		}
 	}
 
-	static void __fastcall ScriptPrintHook(void* scope, void**)
+	// What another mod put there before us (SDEncore does the same), called for everything that isn't our tag.
+	static AtomicFn gPreviousPrint = nullptr;
+	static AtomicFn gPreviousPrintln = nullptr;
+	static AtomicFn gPreviousBreak = nullptr;
+
+	static bool IsOurTag(void* scope)
 	{
+		const uint32_t count = Read<uint32_t>(scope, 0x58);
+		const void* data = Read<const void*>(scope, 0x60);
+		const void* arg = count ? Read<const void*>(Read<const void*>(data, 0x0), 0x8) : nullptr;
+		return HandleTag(arg);
+	}
+
+	static void __fastcall ScriptPrintHook(void* scope, void** result)
+	{
+		if (gPreviousPrint) {
+			gPreviousPrint(scope, result);
+		}
 		ScriptPrint(scope, "", false);
 	}
 
-	static void __fastcall ScriptPrintlnHook(void* scope, void**)
+	static void __fastcall ScriptPrintlnHook(void* scope, void** result)
 	{
+		if (IsOurTag(scope)) {
+			return;
+		}
+		if (gPreviousPrintln) {
+			gPreviousPrintln(scope, result);
+		}
 		ScriptPrint(scope, "", true);
 	}
 
-	static void __fastcall ScriptBreakHook(void* scope, void**)
+	static void __fastcall ScriptBreakHook(void* scope, void** result)
 	{
+		if (gPreviousBreak) {
+			gPreviousBreak(scope, result);
+		}
 		ScriptPrint(scope, "Debug.break: ", true);
 	}
 
@@ -258,9 +283,16 @@ namespace skookum
 				continue;
 			}
 			const uint8_t* current = Read<const uint8_t*>(method, 0x20);
-			if (!Readable(current, 3) || !scan::Matches(current, "C2 00 00")) {
-				LOG("skookum: Debug method %08X isn't the empty function, left alone", name);
+			if (!Readable(current, 3)) {
+				LOG("skookum: Debug method %08X has no function, left alone", name);
 				continue;
+			}
+			// Not the shipped empty function: another mod's (SDEncore patches these too). Ours runs first and hands it
+			// everything but our tags.
+			if (!scan::Matches(current, "C2 00 00")) {
+				const AtomicFn previous = reinterpret_cast<AtomicFn>(const_cast<uint8_t*>(current));
+				(replacement == &ScriptPrintlnHook ? gPreviousPrintln : replacement == &ScriptPrintHook ? gPreviousPrint : gPreviousBreak) = previous;
+				LOG("skookum: Debug method %08X already replaced (by another mod?), chained", name);
 			}
 			std::memcpy(method + 0x20, &replacement, sizeof(replacement));
 			++patched;
@@ -285,7 +317,9 @@ namespace skookum
 
 	static void __fastcall UpdateDeltaHook(float delta)
 	{
-		if (gScriptPrints && !gPrintsPatched && *gWorld) {
+		// Always patched: the "[SDTaxi:watch]" tag hands the taxi to core/ride.cc. The ScriptPrints setting only
+		// decides whether the other lines are logged.
+		if (!gPrintsPatched && *gWorld) {
 			PatchPrints();
 		}
 		ReportFinished();

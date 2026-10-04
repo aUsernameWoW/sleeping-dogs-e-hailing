@@ -2,6 +2,7 @@
 
 #include <Windows.h>
 
+#include <algorithm>
 #include <cstdlib>
 #include <cstring>
 #include <vector>
@@ -58,17 +59,8 @@ namespace scan
 		return !bytes.empty() && mask.front();
 	}
 
-	uint8_t* FindUnique(const char* name, const char* pattern)
+	static int Count(const Section& text, const std::vector<uint8_t>& bytes, const std::vector<bool>& mask, uint8_t*& found)
 	{
-		static const Section text = FindText();
-		std::vector<uint8_t> bytes;
-		std::vector<bool> mask;
-		if (!text.mBegin || !Parse(pattern, bytes, mask)) {
-			LOG("scan: %s: bad pattern or no .text", name);
-			return nullptr;
-		}
-
-		uint8_t* found = nullptr;
 		int count = 0;
 		const size_t length = bytes.size();
 		const uint8_t* last = text.mBegin + text.mSize - length;
@@ -86,13 +78,38 @@ namespace scan
 				++count;
 			}
 		}
+		return count;
+	}
+
+	uint8_t* FindUnique(const char* name, const char* pattern)
+	{
+		static const Section text = FindText();
+		std::vector<uint8_t> bytes;
+		std::vector<bool> mask;
+		if (!text.mBegin || !Parse(pattern, bytes, mask)) {
+			LOG("scan: %s: bad pattern or no .text", name);
+			return nullptr;
+		}
+
+		uint8_t* found = nullptr;
+		int count = Count(text, bytes, mask, found);
+		// Another mod may have hooked the function before we looked: SDEncore hooks five of ours (it loads first,
+		// plugins load in name order), and MinHook writes a `jmp rel32` over the first 5 bytes. Take that jump in
+		// their place; hooking the function again chains (MinHook copies the jump into our trampoline).
+		const char* hooked = "";
+		if (count == 0 && bytes.size() >= 12) {
+			bytes[0] = 0xE9;
+			std::fill(mask.begin() + 1, mask.begin() + 5, false);
+			count = Count(text, bytes, mask, found);
+			hooked = " (it starts with a jump: hooked by another mod)";
+		}
 
 		const auto* base = reinterpret_cast<uint8_t*>(GetModuleHandleW(nullptr));
 		if (count != 1) {
 			LOG("scan: %s: %d matches, not using it", name, count);
 			return nullptr;
 		}
-		LOG("scan: %s at +0x%llX", name, static_cast<unsigned long long>(found - base));
+		LOG("scan: %s at +0x%llX%s", name, static_cast<unsigned long long>(found - base), hooked);
 		return found;
 	}
 
