@@ -73,7 +73,12 @@ parameter: write `Debug.println("a", b)` (braces nest a list, which the log now 
   CLAUDE.md); `dump` puts every class as pseudo-source in `tools\extract\build\skoo\` (grep there for examples).
   Syntax as the game's scripts use it: temporaries declared first (`!a !b`), bound with `a: value`, assigned with
   `a := value`; `if cond [..] else [..]`, `loop [.. exit ..]`, `race [ [..] [..] ]`, casts `x<>Vehicle`, `%` calls
-  on a maybe-nil, lists `{a, b}`, symbols `'name'`, `Transform!()` constructs, `.not()` negates.
+  on a maybe-nil, lists `{a, b}`, symbols `'name'`, `Transform!()` constructs, `.not()` negates. **No grouping
+  parentheses**: `SSParser::parse_expression` reads a `(` that starts an expression as a closure's parameter list
+  (`f((a + b))` fails with "Whitespace required" at `(a`); a code block `[a + b]` groups. **Binary operators have no
+  precedence and are right-associative**: `parse_operator` parses its operand with a whole `parse_expression`, so
+  `a + b * c` is `a + (b * c)`, `a * b + c` is `a * (b + c)`, `x and y > 3` is `x and (y > 3)`. The `skoo` dump
+  prints that structure in valid syntax (`[a + b] * c` where the left side is grouped).
 - **Car Valet** = `Class[7fc2f9c2]`: `CarContact` (GameSlice root), `CCAmbient._gameslice_main` (phone call slice
   `E_CarValetPhoneCall` = `Class[3ccfbed8]`; the PDA contact and the trigger that starts the slice are not in the
   scripts). In short: loop `c_world._find_vehicle_spawn_xform(World.c_player.get_pos(), 40.0, max, true, 0.0001,
@@ -194,7 +199,11 @@ parameter: write `Debug.println("a", b)` (braces nest a list, which the log now 
   own `.text` (bytes in a section of their own land in a second `.text`, which the scan skips). The Debug print slots
   chain the way SDEncore's do: a slot that isn't the shipped `ret 0` is called after ours for everything but our
   tags, and the patch always happens (the `[SDTaxi:watch]` tag needs it; `ScriptPrints` only decides what is
-  logged). Built and unit-tested; not yet run in game with both installed.
+  logged). First game run with both (2026-10-04, the GitHub builds): every hooked function was found but
+  `LaunchSubOption`, whose pattern with the first 5 bytes masked matched 4 places: 3 were other functions' tail jumps
+  (`jmp rel32` into the exe) right before the same `sub rsp, 48h; mov [rsp+30h], -2` prologue. Only a jump that
+  leaves the exe counts now (MinHook's relay is allocated outside the image); checked against the installed exe (the
+  3 decoys jump inside it), and `scan_test` has such a decoy.
 
 ## Testing
 

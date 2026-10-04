@@ -15,6 +15,8 @@ namespace scan
 	{
 		uint8_t* mBegin = nullptr;
 		size_t mSize = 0;
+		const uint8_t* mImage = nullptr;
+		size_t mImageSize = 0;
 	};
 
 	static Section FindText()
@@ -26,7 +28,7 @@ namespace scan
 		IMAGE_SECTION_HEADER* section = IMAGE_FIRST_SECTION(nt);
 		for (WORD i = 0; i < nt->FileHeader.NumberOfSections; ++i, ++section) {
 			if (std::memcmp(section->Name, ".text", 6) == 0) {
-				return { base + section->VirtualAddress, section->Misc.VirtualSize };
+				return { base + section->VirtualAddress, section->Misc.VirtualSize, base, nt->OptionalHeader.SizeOfImage };
 			}
 		}
 		return {};
@@ -59,7 +61,16 @@ namespace scan
 		return !bytes.empty() && mask.front();
 	}
 
-	static int Count(const Section& text, const std::vector<uint8_t>& bytes, const std::vector<bool>& mask, uint8_t*& found)
+	// A `jmp rel32` at `at` that leaves the exe: MinHook's, to the relay it allocates outside the image.
+	static bool JumpsOut(const Section& text, const uint8_t* at)
+	{
+		int32_t offset;
+		std::memcpy(&offset, at + 1, sizeof(offset));
+		const uint8_t* target = at + 5 + offset;
+		return target < text.mImage || target >= text.mImage + text.mImageSize;
+	}
+
+	static int Count(const Section& text, const std::vector<uint8_t>& bytes, const std::vector<bool>& mask, bool hooked, uint8_t*& found)
 	{
 		int count = 0;
 		const size_t length = bytes.size();
@@ -73,7 +84,7 @@ namespace scan
 			while (i < length && (!mask[i] || p[i] == bytes[i])) {
 				++i;
 			}
-			if (i == length) {
+			if (i == length && (!hooked || JumpsOut(text, p))) {
 				found = p;
 				++count;
 			}
@@ -92,15 +103,17 @@ namespace scan
 		}
 
 		uint8_t* found = nullptr;
-		int count = Count(text, bytes, mask, found);
+		int count = Count(text, bytes, mask, false, found);
 		// Another mod may have hooked the function before we looked: SDEncore hooks five of ours (it loads first,
 		// plugins load in name order), and MinHook writes a `jmp rel32` over the first 5 bytes. Take that jump in
-		// their place; hooking the function again chains (MinHook copies the jump into our trampoline).
+		// their place; hooking the function again chains (MinHook copies the jump into our trampoline). Only a jump out
+		// of the exe counts: with the first 5 bytes gone a pattern can also match where another function's tail jump
+		// (`jmp rel32` into the exe) sits right before the same prologue, as LaunchSubOption's did 3 times.
 		const char* hooked = "";
 		if (count == 0 && bytes.size() >= 12) {
 			bytes[0] = 0xE9;
 			std::fill(mask.begin() + 1, mask.begin() + 5, false);
-			count = Count(text, bytes, mask, found);
+			count = Count(text, bytes, mask, true, found);
 			hooked = " (it starts with a jump: hooked by another mod)";
 		}
 

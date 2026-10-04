@@ -94,7 +94,7 @@ mod）、`SDTaxi.asi`（只有 mod）、`SDTaxi.pdb`（调试符号）和 `THIRD
 Visual Studio 2022（v143），Windows SDK 10.0.26100。项目需要放在工作区的 `mods\SDTaxi`，工作区里还要有
 `reference\minhook`（[MinHook](https://github.com/TsudaKageyu/minhook) v1.3.4 源码，随项目一起编译）。在工作区
 根目录运行 `.\tools\build.ps1 -Mod SDTaxi -Test`：`load_test` 在游戏之外加载 .asi，不能崩溃，写出默认 ini，并报告
-找不到游戏函数；`scan_test` 检查特征码查找，包括函数开头已被 hook 的情况。GitHub Actions 用同样的布局编译
+找不到游戏函数；`scan_test` 检查特征码查找，包括函数开头已被 hook 的情况（别处另一个函数结尾的跳转后面正好跟着同样的字节时不能认错）。GitHub Actions 用同样的布局编译
 （`-warnAsError`）、测试、打包并发布预发布版，依赖版本固定在 `.github/reference.env` 和 `.github/asi-loader.env`。
 
 ### 致谢
@@ -228,7 +228,8 @@ Visual Studio 2022 (v143), Windows SDK 10.0.26100. The project has to sit in the
 `reference\minhook` ([MinHook](https://github.com/TsudaKageyu/minhook) v1.3.4 sources, compiled in) next to it. From
 the workspace root, `.\tools\build.ps1 -Mod SDTaxi -Test` builds and runs the tests: `load_test` loads the .asi
 outside the game (it must not crash, must write its default ini and must report the game functions missing), and
-`scan_test` checks the signature scan, including on a function whose start another hook has replaced. GitHub Actions
+`scan_test` checks the signature scan, including on a function whose start another hook has replaced (and not
+mistaking another function's tail jump followed by the same bytes for it). GitHub Actions
 builds the same layout (`-warnAsError`), tests, packages and publishes prereleases; the dependencies are pinned in
 `.github/reference.env` and `.github/asi-loader.env`.
 

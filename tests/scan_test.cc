@@ -1,6 +1,7 @@
 // The signature scan (core/scan.cc) on bytes in this program's own .text: a function's pattern is found, and still
 // found once a 5-byte jump is written over its start, which is how MinHook hooks a function (SDEncore hooks five of
-// SDTaxi's functions before SDTaxi loads). argv[1] (the .asi) isn't used.
+// SDTaxi's functions before SDTaxi loads), but not where a tail jump inside the program precedes the same bytes
+// (LaunchSubOption's pattern matched 3 such places in the game). argv[1] (the .asi) isn't used.
 
 #include "../core/log.cc"
 #include "../core/scan.cc"
@@ -22,6 +23,15 @@ static __declspec(noinline) void Placeholder()
 	for (int i = 0; i < 16; ++i) {
 		gSink = gSink * 31 + i;
 		gSink = gSink ^ (gSink >> 3);
+	}
+}
+
+// Never called either: where the decoy goes, another function's tail jump followed by the hooked function's bytes.
+static __declspec(noinline) void DecoyPlaceholder()
+{
+	for (int i = 0; i < 16; ++i) {
+		gSink = gSink * 37 - i;
+		gSink = gSink ^ (gSink >> 5);
 	}
 }
 
@@ -53,6 +63,16 @@ int main()
 	if (!Write(gFunction, kFunction, sizeof(kFunction))) {
 		return 1;
 	}
+	// jmp rel32 to the made-up function (inside this program), then the made-up function's bytes after its first 5.
+	auto* decoy = reinterpret_cast<unsigned char*>(&DecoyPlaceholder);
+	unsigned char decoyBytes[sizeof(kFunction)];
+	std::memcpy(decoyBytes, kFunction, sizeof(kFunction));
+	decoyBytes[0] = 0xE9;
+	const int32_t toFunction = static_cast<int32_t>(gFunction - (decoy + 5));
+	std::memcpy(decoyBytes + 1, &toFunction, sizeof(toFunction));
+	if (!Write(decoy, decoyBytes, sizeof(decoyBytes))) {
+		return 1;
+	}
 
 	bool ok = Check(scan::FindUnique("function", kPattern) == gFunction, "the pattern is found");
 	ok &= Check(!scan::FindUnique("absent", "48 89 5C 24 10 56 48 83 EC 20 0F B6 DA 48 8B F1 5A 7C 3E 91 D2 6C"),
@@ -64,7 +84,8 @@ int main()
 		return 1;
 	}
 
-	ok &= Check(scan::FindUnique("hooked function", kPattern) == gFunction, "the pattern is found after a hook jump was written over its start");
+	ok &= Check(scan::FindUnique("hooked function", kPattern) == gFunction,
+		"the pattern is found after a hook jump was written over its start, and not at a tail jump into the program");
 	ok &= Check(!scan::FindUnique("hooked, absent", "48 89 5C 24 10 56 48 83 EC 20 0F B6 DA 48 8B F1 5A 7C 3E 91 D2 6C"),
 		"a pattern that isn't there is still not found");
 	ok &= Check(scan::Matches(gFunction + 5, "56 48 83 EC 20"), "only the first 5 bytes were replaced");
